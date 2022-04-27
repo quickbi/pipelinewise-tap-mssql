@@ -147,8 +147,18 @@ def create_column_metadata(cols):
     return metadata.to_list(mdata)
 
 
+def _get_custom_streams(config):
+    custom_streams = collections.defaultdict(list)
+    for stream_config in config.get('custom_streams', []):
+        schema, table = stream_config['base_stream'].split('-')
+        custom_streams[(schema, table)].append(stream_config)
+    return custom_streams
+
+
 def discover_catalog(mssql_conn, config):
     """Returns a Catalog describing the structure of the database."""
+    custom_streams = _get_custom_streams(config)
+
     LOGGER.info("Preparing Catalog")
     mssql_conn = MSSQLConnection(config)
     filter_dbs_config = config.get("filter_dbs")
@@ -250,15 +260,26 @@ def discover_catalog(mssql_conn, config):
 
             md_map = metadata.write(md_map, (), "table-key-properties", key_properties)
 
+            entry_metadata = metadata.to_list(md_map)
             entry = CatalogEntry(
                 table=table_name,
                 stream=table_name,
-                metadata=metadata.to_list(md_map),
+                metadata=entry_metadata,
                 tap_stream_id=common.generate_tap_stream_id(table_schema, table_name),
                 schema=schema,
             )
-
             entries.append(entry)
+
+            for cs in custom_streams.get((table_schema, table_name), []):
+                entry = CatalogEntry(
+                    table=table_name,
+                    stream=cs['custom_stream'],
+                    metadata=entry_metadata,
+                    tap_stream_id=cs['custom_stream'],
+                    schema=schema,
+                )
+                entries.append(entry)
+
     LOGGER.info("Catalog ready")
     return Catalog(entries)
 
