@@ -63,6 +63,11 @@ def get_database_name(catalog_entry):
     return md_map.get((), {}).get("database-name")
 
 
+def get_custom_filter(catalog_entry):
+    md_map = metadata.to_map(catalog_entry.metadata)
+    return md_map.get((), {}).get("custom-filter")
+
+
 def get_key_properties(catalog_entry):
     catalog_metadata = metadata.to_map(catalog_entry.metadata)
     stream_metadata = catalog_metadata.get((), {})
@@ -84,6 +89,10 @@ def generate_select_sql(catalog_entry, columns):
     escaped_columns = [escape(c) for c in columns]
 
     select_sql = "SELECT {} FROM {}.{}".format(",".join(escaped_columns), escaped_db, escaped_table)
+
+    custom_filter = get_custom_filter(catalog_entry)
+    if custom_filter:
+        select_sql = "{} WHERE {}".format(select_sql, custom_filter)
 
     # escape percent signs
     select_sql = select_sql.replace("%", "%%")
