@@ -130,12 +130,7 @@ def schema_for_column(c, config):
             result.format = "date-time"
 
     elif data_type in TIME_TYPES:
-        if use_date_data_type_format:
             result.type = ["null", "string"]
-            result.format = "time"
-        else:
-            result.type = ["null", "string"]
-            result.format = "date-time"
 
     elif data_type in VARIANT_TYPES:
         result.type = ["null", "object"]
