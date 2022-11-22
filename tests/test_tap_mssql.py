@@ -244,7 +244,7 @@ class TestTypeMapping(unittest.TestCase):
     def test_time(self):
         self.assertEqual(
             self.schema.properties["c_time"],
-            Schema(["null", "string"], format="date-time", inclusion="available"),
+            Schema(["null", "string"], inclusion="available"),
         )
         self.assertEqual(
             self.get_metadata_for_column("c_time"),
